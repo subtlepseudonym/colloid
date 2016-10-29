@@ -5,13 +5,13 @@
 package main
 
 import (
-	"http"
+	"net/http"
 	"log"
 	"os"
 	"fmt"
 )
 
-func indexHandler(res http.ResponseWriter, req *http.REquest) {
+func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "This is the index.")
 }
 
@@ -21,7 +21,7 @@ func init() {
 }
 
 func main() {
-	http.HandlerFunc("/", indexHandler)
+	http.HandleFunc("/", indexHandler)
 
-	log.Fatal(http.ListenAndServe("8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
