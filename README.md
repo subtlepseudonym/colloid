@@ -11,5 +11,4 @@ This repo is for a motley collection of golang and nodejs code.
 #### Project Files ####
 
 + solution.go
-	- This gets things started
-	- As of now, it just handles a few endpoints and doesn't do anything too interesting
+	- On startup, prints the public ip and port that it's listening on
