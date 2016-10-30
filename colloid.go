@@ -1,5 +1,5 @@
 /* Colloid Server
- * subtlepseudonym
+ * subtlepseudonym (subtlepseudonym@gmail.com)
  */
 
 package main
