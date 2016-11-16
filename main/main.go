@@ -22,6 +22,18 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/index.html")
 }
 
+func logHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO receive html encoded text and store to postgres
+}
+
+func getLogViewHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO serve form retrieving logs to read
+}
+
+func logViewHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO serve logs based upon POST data
+}
+
 func init() {
 	// Enable logging to local file
 	log.SetOutput(os.Stdout)
