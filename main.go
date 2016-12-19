@@ -18,6 +18,7 @@ import (
 )
 
 type LogEntry struct {
+	id int
 	timestamp time.Time
 	title string
 	entry string
@@ -66,11 +67,12 @@ func getLogs(query string) []LogEntry {
 	var ret []LogEntry
 	for rows.Next() {
 		var (
+			id int
 			timeStr string
 			title string
 			entry string
 		)
-		err = rows.Scan(&timeStr, &title, &entry)
+		err = rows.Scan(&id, &timeStr, &title, &entry)
 		if err != nil {
 			log.Println("Error scanning DB row --")
 			log.Println(err)
@@ -82,7 +84,7 @@ func getLogs(query string) []LogEntry {
 			log.Println(err)
 		}
 
-		ret = append(ret, LogEntry{ timestamp: parsedTime, title: title, entry: entry })
+		ret = append(ret, LogEntry{ id: id, timestamp: parsedTime, title: title, entry: entry })
 	}
 	return ret
 }
@@ -132,8 +134,8 @@ func init() {
 func main() {
 	// FIXME: db calls are test code -- to be removed
 	rows := getLogs("SELECT * FROM logs ORDER BY timestamp")
-	for _, entry := range rows {
-		fmt.Println(strings.Join([]string{entry.timestamp.Format(time.Stamp), entry.title, entry.entry}, "\t|\t"))
+	for _, logEntry := range rows {
+		fmt.Printf("Log %4d | %s | %-10s | %s\n", logEntry.id, logEntry.timestamp.Format(time.Stamp), logEntry.title, logEntry.entry)
 	}
 
 	// TODO: start using muxer for endpoints
