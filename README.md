@@ -1,6 +1,6 @@
 ### Colloid Server Sandbox ###
 
-This repo is for a motley collection of web code.
+This repo is for a motley collection of web code and project files for screwing around on my home server.
 
 #### Requirements ####
 
@@ -16,9 +16,14 @@ This repo is for a motley collection of web code.
 
 #### TODO ####
 
-+ Implement npm use
-	- Get rid of those pesky CDN calls in index.html
-	- Could be a segue for Angular 2?
++ Organization
+	- Separate into packages
+	- Static IPs
+	- Separate repo for front end
+	- Docker?
++ Transition page serving to separate front end
+	- Angular 2!
+	- Stop serving files, start serving REST endpoints
 + Do something with go-cron
 	- That shit's cool
 	- Twilio?
@@ -28,3 +33,8 @@ This repo is for a motley collection of web code.
 	- Actual log viewer
 	- Simplified log submission interface
 	- <em>Need</em> a key of some kind for submissions (rsa?)
++ Stretch
+	- New box / Spanner / RAID
+	- Talk to atlas (very stretch)
+	- Simple user accts (not so stretch)
+	- IRC-like stuff
