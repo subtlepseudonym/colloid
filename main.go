@@ -7,36 +7,42 @@ package main
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type LogEntry struct {
-	id int
-	timestamp time.Time
-	title string
-	entry string
+	Id        int       `json:"id"`
+	Timestamp time.Time `json:"timestamp"`
+	Title     string    `json:"title"`
+	Entry     string    `json:"entry"`
 }
 
 const (
-	servPort string = ":8080"
+	servPort string = ":16874"
 	// FIXME: properly set up static ips
-	dbAddress string = "postgres://postgres:postgres@192.168.1.4/colloiddb?sslmode=require"
+	dbAddress string = "postgres://postgres:postgres@192.168.1.3/colloiddb?sslmode=require"
 )
 
 var (
 	db *sql.DB
 )
 
-// TODO: organize handlers into rest package
-// TODO: rewrite handlers as REST endpoints
-// TODO: serve files on Angular 2 front end
+func simpleJsonResponse(statusStr, msgStr string) []byte {
+	return []byte(fmt.Sprintf(`{"status":"%s","msg":"%s"}`, statusStr, msgStr))
+}
+
+// TODO: checkout golang's options for serving files (and whether that's easy / a good or effective idea)
+// How does golang do with dynamically adding data to the views we're rendering?
+// Can always reformat handlers into a REST api and field request from a decoupled front-end
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: serve bootstrap locally (rather than cdn in index.html)
 	http.ServeFile(w, r, "assets/index.html")
@@ -44,11 +50,49 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func addLogHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: insert log into db
+	// pretty straight forward
+	// probably only accepting POST
 }
 
+// TODO: add an editLogHandler() ?? maybe updateLogHandler()
+// would need to be accessible through the ui for getting logs
+
 func getLogHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: retrieve logs from db
-	// TODO: POST or GET?
+	if r.Method == "GET" {
+		// retrieve all logs
+		logs, err := getLogs("*")
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(simpleJsonResponse("500 Internal Server Error", "Error retrieving the log entries"))
+			return
+		}
+
+		// FIXME: mostly just returning log entries in raw format for testing and to get the compiler to stop complaining that I'm not using 'logs'
+		resBytes, err := json.Marshal(logs)
+		if err != nil {
+			log.Println("Error marshalling log entries --")
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(simpleJsonResponse("500 Internal Server Error", "Error marshalling log entires"))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(resBytes)
+
+		// pass LogEntry array to file render? gotta get that data into the ui
+	} else if r.Method == "POST" {
+		// retrieve logs matching search query
+		r.ParseForm()
+		// sanitize the shit out of that query
+		// then it's more or less just like above
+		// maybe add some stuff related to search effectiveness, close matches, etc
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write(simpleJsonResponse("405 Method Not Allowed", "Only 'GET' or 'POST' allowed"))
+		return
+	}
 }
 
 func corsProxyHandler(w http.ResponseWriter, r *http.Request) {
@@ -57,36 +101,36 @@ func corsProxyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Retrieve logs from colloiddb
-func getLogs(query string) []LogEntry {
-	rows, err := db.Query(query)
+func getLogs(query string) ([]LogEntry, error) {
+	rows, err := db.Query(fmt.Sprintf("SELECT %s FROM logs ORDER BY timestamp", query))
 	if err != nil {
 		log.Println("Error querying database --")
-		log.Println(err)
+		return nil, err
 	}
 
 	var ret []LogEntry
 	for rows.Next() {
 		var (
-			id int
+			id      int
 			timeStr string
-			title string
-			entry string
+			title   string
+			entry   string
 		)
 		err = rows.Scan(&id, &timeStr, &title, &entry)
 		if err != nil {
 			log.Println("Error scanning DB row --")
-			log.Println(err)
+			return nil, err
 		}
 
 		parsedTime, err := time.Parse(time.RFC3339, timeStr)
 		if err != nil {
 			log.Println("Error parsing time string from DB --")
-			log.Println(err)
+			return nil, err
 		}
 
-		ret = append(ret, LogEntry{ id: id, timestamp: parsedTime, title: title, entry: entry })
+		ret = append(ret, LogEntry{Id: id, Timestamp: parsedTime, Title: title, Entry: entry})
 	}
-	return ret
+	return ret, nil
 }
 
 // Overkill in most cases
@@ -133,9 +177,9 @@ func init() {
 
 func main() {
 	// FIXME: db calls are test code -- to be removed
-	rows := getLogs("SELECT * FROM logs ORDER BY timestamp")
-	for _, logEntry := range rows {
-		fmt.Printf("Log %4d | %s | %-10s | %s\n", logEntry.id, logEntry.timestamp.Format(time.Stamp), logEntry.title, logEntry.entry)
+	logs, _ := getLogs("*")
+	for _, logEntry := range logs {
+		fmt.Printf("Log %4d | %s | %-10s | %s\n", logEntry.Id, logEntry.Timestamp.Format(time.Stamp), logEntry.Title, logEntry.Entry)
 	}
 
 	// TODO: start using muxer for endpoints
