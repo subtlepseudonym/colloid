@@ -17,6 +17,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/gorilla/mux"
 )
 
 type LogEntry struct {
@@ -60,7 +61,7 @@ func addLogHandler(w http.ResponseWriter, r *http.Request) {
 func getLogHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		// retrieve all logs
-		logs, err := getLogs("*")
+		logs, err := logQuery("SELECT * FROM logs ORDER BY timestamp DESC")
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -88,11 +89,32 @@ func getLogHandler(w http.ResponseWriter, r *http.Request) {
 		// sanitize the shit out of that query
 		// then it's more or less just like above
 		// maybe add some stuff related to search effectiveness, close matches, etc
-	} else {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write(simpleJsonResponse("405 Method Not Allowed", "Only 'GET' or 'POST' allowed"))
+	}
+	// gorilla mux should return a 404 if method doesn't match GET or POST
+}
+
+func getLogByIdHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r) // This route won't be run if vars["id"] == ""
+	logs, err := logQuery(fmt.Sprintf(`SELECT * FROM logs WHERE id = %s ORDER BY timestamp DESC`, vars["id"]))
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(simpleJsonResponse("500 Internal Server Error", "Error retrieving the log entries"))
 		return
 	}
+
+	// FIXME: mostly just returning log entries in raw format for testing and to get the compiler to stop complaining that I'm not using 'logs'
+	resBytes, err := json.Marshal(logs[0]) // Should only be one log matching id query
+	if err != nil {
+		log.Println("Error marshalling log entries --")
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(simpleJsonResponse("500 Internal Server Error", "Error marshalling log entires"))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(resBytes)
 }
 
 func corsProxyHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,8 +123,8 @@ func corsProxyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Retrieve logs from colloiddb
-func getLogs(query string) ([]LogEntry, error) {
-	rows, err := db.Query(fmt.Sprintf("SELECT %s FROM logs ORDER BY timestamp", query))
+func logQuery(query string) ([]LogEntry, error) {
+	rows, err := db.Query(query)
 	if err != nil {
 		log.Println("Error querying database --")
 		return nil, err
@@ -176,19 +198,16 @@ func init() {
 }
 
 func main() {
-	// FIXME: db calls are test code -- to be removed
-	logs, _ := getLogs("*")
-	for _, logEntry := range logs {
-		fmt.Printf("Log %4d | %s | %-10s | %s\n", logEntry.Id, logEntry.Timestamp.Format(time.Stamp), logEntry.Title, logEntry.Entry)
-	}
 
-	// TODO: start using muxer for endpoints
-	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/add", addLogHandler)
-	http.HandleFunc("/get", getLogHandler)
-	http.HandleFunc("/cors", corsProxyHandler)
+	r := mux.NewRouter()
+	r.HandleFunc("/", indexHandler)
+	r.HandleFunc("/add", addLogHandler)
+	r.HandleFunc("/get", getLogHandler).Methods("GET", "POST")
+	r.HandleFunc("/get/{id}", getLogByIdHandler).Methods("GET")
+	r.HandleFunc("/cors", corsProxyHandler)
 
+	// FIXME: serve static files using gorilla mux
 	http.Handle("/assets", http.FileServer(http.Dir("assets")))
 
-	log.Fatal(http.ListenAndServe(servPort, nil))
+	log.Fatal(http.ListenAndServe(servPort, r))
 }

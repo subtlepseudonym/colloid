@@ -3,21 +3,44 @@
 <html lang="en">
 <head>
 	<title>Colloid</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+	<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 </head>
 
 <body>
-	<div class='container'>
-		<div class='col-sm-4'></div>
-		<div class='col-sm-4'>
-			<h3 class='text-center'>Welcome to the Index</h3>
-		</div>
-		<div class='col-sm-4'></div>
+	<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+		<header class="mdl-layout__header">
+			<div class="mdl-layout__header-row">
+				<span class="mdl-layout-title">Colloid</span>
+				<div class="mdl-layout-spacer"></div>
+				<div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable
+										mdl-textfield--floating-label mdl-textfield--align-right">
+					<label class="mdl-button mdl-js-button mdl-button--icon"
+								 for="fixed-header-drawer-exp">
+						<i class="material-icons">search</i>
+					</label>
+					<div class="mdl-textfield__expandable-holder">
+						<input class="mdl-textfield__input" type="text" name="query"
+									 id="fixed-header-drawer-exp">
+					</div>
+				</div>
+			</div>
+		</header>
+		<div class="mdl-layout__drawer">
+		<span class="mdl-layout-title">Colloid</span>
+		<nav class="mdl-navigation">
+			<a class="mdl-navigation__link" href="/add">New Log</a>
+			<a class="mdl-navigation__link" href="">Link</a>
+			<a class="mdl-navigation__link" href="">Link</a>
+			<a class="mdl-navigation__link" href="">Link</a>
+		</nav>
+	</div>
+	<main class="mdl-layout__content">
+		<div class="page-content"><!-- Your content goes here --></div>
+	</main>
 	</div>
 </body>
-
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
 </html>
